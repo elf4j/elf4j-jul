@@ -43,10 +43,8 @@ import static elf4j.Level.*;
 class JdkLogger implements Logger {
     private static final char CLOSE_BRACE = '}';
     private static final Level DEFAULT_LEVEL = INFO;
-    private static final String ELF4J_LOGGER = Logger.class.getName();
     private static final String EMPTY_MESSAGE = "";
     private static final String INSTANCE = "instance";
-    private static final String JDK_LOGGER = JdkLogger.class.getName();
     private static final EnumMap<Level, java.util.logging.Level> LEVEL_MAP = setLevelMap();
     private static final String LOG = "log";
     private static final EnumMap<Level, Map<String, JdkLogger>> LOGGER_CACHE = initLoggerCache();
@@ -62,17 +60,16 @@ class JdkLogger implements Logger {
     }
 
     static JdkLogger instance() {
-        return getLogger(CallingStackUtil.mostRecentCallerOf(ELF4J_LOGGER, INSTANCE).getClassName());
+        return getLogger(CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName());
     }
 
     static JdkLogger instance(String name) {
-        return getLogger(
-                name == null ? CallingStackUtil.mostRecentCallerOf(ELF4J_LOGGER, INSTANCE).getClassName() : name);
+        return getLogger(name == null ? CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName() : name);
     }
 
     static JdkLogger instance(Class<?> clazz) {
-        return getLogger(clazz == null ? CallingStackUtil.mostRecentCallerOf(ELF4J_LOGGER, INSTANCE).getClassName() :
-                clazz.getName());
+        return getLogger(
+                clazz == null ? CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName() : clazz.getName());
     }
 
     private static JdkLogger getLogger(String name) {
@@ -254,44 +251,66 @@ class JdkLogger implements Logger {
         return !nativeLogger.isLoggable(LEVEL_MAP.get(this.level));
     }
 
-    private static class CallingStackUtil {
+    private static class CallStack {
 
-        static StackTraceElement mostRecentCallerOf(@NonNull String className, @NonNull String methodName) {
+        static StackTraceElement mostRecentCallerOf(@NonNull Class<?> clazz, @NonNull String methodName) {
             StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
             for (int i = 0; i < stackTrace.length; i++) {
                 StackTraceElement stackTraceElement = stackTrace[i];
-                if (className.equals(stackTraceElement.getClassName())
+                if (clazz.getName().equals(stackTraceElement.getClassName())
                         && methodName.equals(stackTraceElement.getMethodName())) {
                     return stackTrace[i + 1];
                 }
             }
             throw new IllegalArgumentException(
-                    "unable to locate caller of " + className + "#" + methodName + " in calling stack "
+                    "unable to locate caller of " + clazz.getName() + "#" + methodName + " in calling stack "
                             + Arrays.toString(stackTrace));
         }
     }
 
     private static class ExtendedLogRecord extends LogRecord {
+        private boolean needToInferCaller;
+        private String callerClassName;
+        private String callerMethodName;
+
         public ExtendedLogRecord(java.util.logging.Level level, String msg) {
             super(level, msg);
+            needToInferCaller = true;
         }
 
         @Override
         public String getSourceClassName() {
-            return inferCallerClassName();
+            if (needToInferCaller) {
+                interCaller();
+            }
+            return callerClassName;
+        }
+
+        @Override
+        public void setSourceClassName(String sourceClassName) {
+            callerClassName = sourceClassName;
+            needToInferCaller = false;
         }
 
         @Override
         public String getSourceMethodName() {
-            return inferCallerMethodName();
+            if (needToInferCaller) {
+                interCaller();
+            }
+            return callerMethodName;
         }
 
-        private @NonNull String inferCallerClassName() {
-            return CallingStackUtil.mostRecentCallerOf(JDK_LOGGER, LOG).getClassName();
+        @Override
+        public void setSourceMethodName(String sourceMethodName) {
+            callerMethodName = sourceMethodName;
+            needToInferCaller = false;
         }
 
-        private @NonNull String inferCallerMethodName() {
-            return CallingStackUtil.mostRecentCallerOf(JDK_LOGGER, LOG).getMethodName();
+        private void interCaller() {
+            needToInferCaller = false;
+            StackTraceElement caller = CallStack.mostRecentCallerOf(JdkLogger.class, LOG);
+            setSourceClassName(caller.getClassName());
+            setSourceMethodName(caller.getMethodName());
         }
     }
 }

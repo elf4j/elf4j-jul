@@ -149,7 +149,7 @@ class JdkLoggerTest {
 
         @Test
         void throwableAndMessageAndArgs() {
-            logger.atInfo().log("let see immutability in action...");
+            logger.atInfo().log("let's see immutability in action...");
             Logger errorLogger = logger.atError();
             Throwable ex = new Exception("ex message");
             errorLogger.log(ex, "level set omitted, the log level is Level.ERROR");
@@ -162,7 +162,7 @@ class JdkLoggerTest {
                             "instance");
             errorLogger.atError()
                     .log(ex,
-                            "the atError() call is {} because the errorLogger instance is {}, and the instance's log level has always been Level.ERROR",
+                            "the atError() call is {} because the errorLogger instance is {}, and the instance''s log level has always been Level.ERROR",
                             "unnecessary",
                             "immutable");
             errorLogger.log(ex,
