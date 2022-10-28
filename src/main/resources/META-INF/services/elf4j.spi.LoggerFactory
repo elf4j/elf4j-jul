@@ -22,4 +22,4 @@
 # SOFTWARE.
 #
 
-elf4j.jdk.JdkLoggerFactory
+elf4j.jul.JulLoggerFactory

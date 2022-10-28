@@ -22,9 +22,8 @@
  * SOFTWARE.
  */
 
-package elf4j.jdk;
+package elf4j.jul;
 
-import elf4j.Level;
 import elf4j.Logger;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -32,27 +31,19 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-class JdkLoggerTest {
-    public static final Logger LOGGER = Logger.instance(JdkLoggerTest.class);
+class JulLoggerTest {
+    public static final Logger LOGGER = Logger.instance(JulLoggerTest.class);
 
     @Nested
-    class levels {
+    class isEnabled {
 
         @Test
         void optToSupplyDefaultLevelAsInfo() {
-            assertEquals(Level.INFO, LOGGER.getLevel());
-            LOGGER.log("opt to provide default level");
-        }
-
-        @Test
-        void noArgAtHonorsLeveOnMethodName() {
-            assertEquals(Level.TRACE, LOGGER.atTrace().getLevel());
-            assertEquals(Level.DEBUG, LOGGER.atDebug().getLevel());
-            assertEquals(Level.INFO, LOGGER.atInfo().getLevel());
-            assertEquals(Level.WARN, LOGGER.atWarn().getLevel());
-            assertEquals(Level.ERROR, LOGGER.atError().getLevel());
+            assertTrue(Logger.instance().isEnabled());
+            assertFalse(Logger.instance().atDebug().isEnabled());
+            assertTrue(Logger.instance().atWarn().isEnabled());
         }
     }
 

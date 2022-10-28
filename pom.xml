@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.elf4j</groupId>
-    <artifactId>elf4j-jdk</artifactId>
+    <artifactId>elf4j-jul</artifactId>
     <version>1.0.0</version>
 
     <packaging>jar</packaging>
-    <name>elf4j-jdk</name>
+    <name>elf4j-jul</name>
     <description>logback provider binding for ELF4J</description>
 
-    <url>https://github.com/elf4j/elf4j-jdk</url>
+    <url>https://github.com/elf4j/elf4j-jul</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -20,12 +20,12 @@
         </license>
     </licenses>
     <scm>
-        <url>https://github.com/elf4j/elf4j-jdk</url>
+        <url>https://github.com/elf4j/elf4j-jul</url>
         <connection>
-            scm:git:git://github.com:elf4j/elf4j-jdk.git
+            scm:git:git://github.com:elf4j/elf4j-jul.git
         </connection>
         <developerConnection>
-            scm:git:ssh://github.com:elf4j/elf4j-jdk.git
+            scm:git:ssh://github.com:elf4j/elf4j-jul.git
         </developerConnection>
     </scm>
     <developers>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>io.github.elf4j</groupId>
             <artifactId>elf4j-api</artifactId>
-            <version>4.0.0</version>
+            <version>5.0.0</version>
         </dependency>
         <dependency>
             <groupId>net.jcip</groupId>

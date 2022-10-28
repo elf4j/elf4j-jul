@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package elf4j.jdk;
+package elf4j.jul;
 
 import elf4j.Level;
 import elf4j.Logger;
@@ -40,53 +40,53 @@ import static elf4j.Level.*;
 
 @Immutable
 @ToString
-class JdkLogger implements Logger {
+class JulLogger implements Logger {
     private static final char CLOSE_BRACE = '}';
     private static final Level DEFAULT_LEVEL = INFO;
     private static final String EMPTY_MESSAGE = "";
     private static final String INSTANCE = "instance";
     private static final EnumMap<Level, java.util.logging.Level> LEVEL_MAP = setLevelMap();
     private static final String LOG = "log";
-    private static final EnumMap<Level, Map<String, JdkLogger>> LOGGER_CACHE = initLoggerCache();
+    private static final EnumMap<Level, Map<String, JulLogger>> LOGGER_CACHE = initLoggerCache();
     private static final char OPEN_BRACE = '{';
     @NonNull private final String name;
     @NonNull private final Level level;
     @NonNull private final java.util.logging.Logger nativeLogger;
 
-    private JdkLogger(@NonNull String name, @NonNull Level level) {
+    private JulLogger(@NonNull String name, @NonNull Level level) {
         this.name = name;
         this.level = level;
         this.nativeLogger = java.util.logging.Logger.getLogger(name);
     }
 
-    static JdkLogger instance() {
+    static JulLogger instance() {
         return getLogger(CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName());
     }
 
-    static JdkLogger instance(String name) {
+    static JulLogger instance(String name) {
         return getLogger(name == null ? CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName() : name);
     }
 
-    static JdkLogger instance(Class<?> clazz) {
+    static JulLogger instance(Class<?> clazz) {
         return getLogger(
                 clazz == null ? CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName() : clazz.getName());
     }
 
-    private static JdkLogger getLogger(String name) {
+    private static JulLogger getLogger(String name) {
         return getLogger(name, DEFAULT_LEVEL);
     }
 
-    private static JdkLogger getLogger(@NonNull String name, @NonNull Level level) {
-        return LOGGER_CACHE.get(level).computeIfAbsent(name, k -> new JdkLogger(k, level));
+    private static JulLogger getLogger(@NonNull String name, @NonNull Level level) {
+        return LOGGER_CACHE.get(level).computeIfAbsent(name, k -> new JulLogger(k, level));
     }
 
-    private static EnumMap<Level, Map<String, JdkLogger>> initLoggerCache() {
-        EnumMap<Level, Map<String, JdkLogger>> loggerCache = new EnumMap<>(Level.class);
+    private static EnumMap<Level, Map<String, JulLogger>> initLoggerCache() {
+        EnumMap<Level, Map<String, JulLogger>> loggerCache = new EnumMap<>(Level.class);
         EnumSet.allOf(Level.class).forEach(level -> loggerCache.put(level, new ConcurrentHashMap<>()));
         return loggerCache;
     }
 
-    private static String replaceWithJdkPlaceholders(String message) {
+    private static String replaceWithJulPlaceholders(String message) {
         StringBuilder stringBuilder = new StringBuilder();
         char[] chars = message.toCharArray();
         int placeholderIndex = 0;
@@ -109,16 +109,6 @@ class JdkLogger implements Logger {
         levelMap.put(WARN, java.util.logging.Level.WARNING);
         levelMap.put(ERROR, java.util.logging.Level.SEVERE);
         return levelMap;
-    }
-
-    @Override
-    public @NonNull String getName() {
-        return this.name;
-    }
-
-    @Override
-    public @NonNull Level getLevel() {
-        return this.level;
     }
 
     @Override
@@ -147,6 +137,19 @@ class JdkLogger implements Logger {
     }
 
     @Override
+    public @NonNull String getName() {
+        return this.name;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        if (this.level == OFF) {
+            return false;
+        }
+        return !isLevelDisabled();
+    }
+
+    @Override
     public void log(Object message) {
         if (isLevelDisabled()) {
             return;
@@ -168,7 +171,7 @@ class JdkLogger implements Logger {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJdkPlaceholders(message));
+                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
         extendedLogRecord.setParameters(args);
         nativeLogger.log(extendedLogRecord);
     }
@@ -179,7 +182,7 @@ class JdkLogger implements Logger {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJdkPlaceholders(message));
+                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
         extendedLogRecord.setParameters(Arrays.stream(args).map(Supplier::get).toArray(Object[]::new));
         nativeLogger.log(extendedLogRecord);
     }
@@ -222,7 +225,7 @@ class JdkLogger implements Logger {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJdkPlaceholders(message));
+                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
         extendedLogRecord.setParameters(args);
         extendedLogRecord.setThrown(t);
         nativeLogger.log(extendedLogRecord);
@@ -234,7 +237,7 @@ class JdkLogger implements Logger {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJdkPlaceholders(message));
+                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
         extendedLogRecord.setParameters(Arrays.stream(args).map(Supplier::get).toArray(Object[]::new));
         extendedLogRecord.setThrown(t);
         nativeLogger.log(extendedLogRecord);
@@ -308,7 +311,7 @@ class JdkLogger implements Logger {
 
         private void interCaller() {
             needToInferCaller = false;
-            StackTraceElement caller = CallStack.mostRecentCallerOf(JdkLogger.class, LOG);
+            StackTraceElement caller = CallStack.mostRecentCallerOf(JulLogger.class, LOG);
             setSourceClassName(caller.getClassName());
             setSourceMethodName(caller.getMethodName());
         }
