@@ -44,9 +44,7 @@ class JulLogger implements Logger {
     private static final char CLOSE_BRACE = '}';
     private static final Level DEFAULT_LEVEL = INFO;
     private static final String EMPTY_MESSAGE = "";
-    private static final String INSTANCE = "instance";
     private static final EnumMap<Level, java.util.logging.Level> LEVEL_MAP = setLevelMap();
-    private static final String LOG = "log";
     private static final EnumMap<Level, Map<String, JulLogger>> LOGGER_CACHE = initLoggerCache();
     private static final char OPEN_BRACE = '{';
     @NonNull private final String name;
@@ -60,16 +58,15 @@ class JulLogger implements Logger {
     }
 
     static JulLogger instance() {
-        return getLogger(CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName());
+        return getLogger(CallStack.mostRecentCallerOf(Logger.class).getClassName());
     }
 
     static JulLogger instance(String name) {
-        return getLogger(name == null ? CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName() : name);
+        return getLogger(name == null ? CallStack.mostRecentCallerOf(Logger.class).getClassName() : name);
     }
 
     static JulLogger instance(Class<?> clazz) {
-        return getLogger(
-                clazz == null ? CallStack.mostRecentCallerOf(Logger.class, INSTANCE).getClassName() : clazz.getName());
+        return getLogger(clazz == null ? CallStack.mostRecentCallerOf(Logger.class).getClassName() : clazz.getName());
     }
 
     private static JulLogger getLogger(String name) {
@@ -256,18 +253,21 @@ class JulLogger implements Logger {
 
     private static class CallStack {
 
-        static StackTraceElement mostRecentCallerOf(@NonNull Class<?> clazz, @NonNull String methodName) {
+        static StackTraceElement mostRecentCallerOf(@NonNull Class<?> calleeClass) {
             StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            String calleeClassName = calleeClass.getName();
             for (int i = 0; i < stackTrace.length; i++) {
-                StackTraceElement stackTraceElement = stackTrace[i];
-                if (clazz.getName().equals(stackTraceElement.getClassName())
-                        && methodName.equals(stackTraceElement.getMethodName())) {
-                    return stackTrace[i + 1];
+                if (calleeClassName.equals(stackTrace[i].getClassName())) {
+                    for (int j = i + 1; j < stackTrace.length; j++) {
+                        if (!calleeClassName.equals(stackTrace[j].getClassName())) {
+                            return stackTrace[j];
+                        }
+                    }
+                    break;
                 }
             }
-            throw new IllegalArgumentException(
-                    "unable to locate caller of " + clazz.getName() + "#" + methodName + " in calling stack "
-                            + Arrays.toString(stackTrace));
+            throw new NoSuchElementException("unable to locate caller class of " + calleeClass + " in call stack "
+                    + Arrays.toString(stackTrace));
         }
     }
 
@@ -311,7 +311,7 @@ class JulLogger implements Logger {
 
         private void interCaller() {
             needToInferCaller = false;
-            StackTraceElement caller = CallStack.mostRecentCallerOf(JulLogger.class, LOG);
+            StackTraceElement caller = CallStack.mostRecentCallerOf(JulLogger.class);
             setSourceClassName(caller.getClassName());
             setSourceMethodName(caller.getMethodName());
         }
