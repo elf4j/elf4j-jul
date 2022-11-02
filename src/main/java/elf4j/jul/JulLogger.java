@@ -169,8 +169,12 @@ class JulLogger implements Logger {
         }
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(args);
+        extendedLogRecord.setParameters(supply(args));
         nativeLogger.log(extendedLogRecord);
+    }
+
+    private Object[] supply(Object[] args) {
+        return Arrays.stream(args).map(arg -> arg instanceof Supplier<?> ? ((Supplier<?>) arg).get() : arg).toArray();
     }
 
     @Override
@@ -223,7 +227,7 @@ class JulLogger implements Logger {
         }
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(args);
+        extendedLogRecord.setParameters(supply(args));
         extendedLogRecord.setThrown(t);
         nativeLogger.log(extendedLogRecord);
     }
