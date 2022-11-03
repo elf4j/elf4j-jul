@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import static elf4j.Logger.arg;
+import static elf4j.util.MessageArguments.arg;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JulLoggerTest {

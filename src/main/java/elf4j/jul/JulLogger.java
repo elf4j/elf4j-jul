@@ -37,6 +37,7 @@ import java.util.function.Supplier;
 import java.util.logging.LogRecord;
 
 import static elf4j.Level.*;
+import static elf4j.util.MessageArguments.supply;
 
 @Immutable
 @ToString
@@ -139,6 +140,11 @@ class JulLogger implements Logger {
     }
 
     @Override
+    public @NonNull Level getLevel() {
+        return this.level;
+    }
+
+    @Override
     public boolean isEnabled() {
         if (this.level == OFF) {
             return false;
@@ -171,10 +177,6 @@ class JulLogger implements Logger {
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
         extendedLogRecord.setParameters(supply(args));
         nativeLogger.log(extendedLogRecord);
-    }
-
-    private Object[] supply(Object[] args) {
-        return Arrays.stream(args).map(arg -> arg instanceof Supplier<?> ? ((Supplier<?>) arg).get() : arg).toArray();
     }
 
     @Override
