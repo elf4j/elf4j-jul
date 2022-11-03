@@ -6,7 +6,7 @@
 
     <groupId>io.github.elf4j</groupId>
     <artifactId>elf4j-jul</artifactId>
-    <version>2.0.0</version>
+    <version>3.0.0</version>
 
     <packaging>jar</packaging>
     <name>elf4j-jul</name>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>io.github.elf4j</groupId>
             <artifactId>elf4j-api</artifactId>
-            <version>6.0.0</version>
+            <version>7.0.0</version>
         </dependency>
         <dependency>
             <groupId>net.jcip</groupId>

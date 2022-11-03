@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 import java.util.logging.LogRecord;
 
 import static elf4j.Level.*;
-import static elf4j.util.MessageArguments.supply;
 
 @Immutable
 @ToString
@@ -91,7 +90,7 @@ class JulLogger implements Logger {
         for (int i = 0; i < chars.length; i++) {
             char current = chars[i];
             stringBuilder.append(current);
-            char next = ((i + 1) == chars.length) ? Character.MIN_VALUE : chars[i + 1];
+            char next = i + 1 == chars.length ? Character.MIN_VALUE : chars[i + 1];
             if (current == OPEN_BRACE && next == CLOSE_BRACE) {
                 stringBuilder.append(placeholderIndex++);
             }
@@ -175,7 +174,7 @@ class JulLogger implements Logger {
         }
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(supply(args));
+        extendedLogRecord.setParameters(args);
         nativeLogger.log(extendedLogRecord);
     }
 
@@ -229,7 +228,7 @@ class JulLogger implements Logger {
         }
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(supply(args));
+        extendedLogRecord.setParameters(args);
         extendedLogRecord.setThrown(t);
         nativeLogger.log(extendedLogRecord);
     }
