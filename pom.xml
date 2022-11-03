@@ -10,7 +10,7 @@
 
     <packaging>jar</packaging>
     <name>elf4j-jul</name>
-    <description>logback provider binding for ELF4J</description>
+    <description>java.util.logging provider binding for ELF4J</description>
 
     <url>https://github.com/elf4j/elf4j-jul</url>
     <licenses>
