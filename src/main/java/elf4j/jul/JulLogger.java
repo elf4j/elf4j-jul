@@ -49,12 +49,14 @@ class JulLogger implements Logger {
     private static final char OPEN_BRACE = '{';
     @NonNull private final String name;
     @NonNull private final Level level;
+    private final boolean enabled;
     @NonNull private final java.util.logging.Logger nativeLogger;
 
     private JulLogger(@NonNull String name, @NonNull Level level) {
         this.name = name;
         this.level = level;
         this.nativeLogger = java.util.logging.Logger.getLogger(name);
+        this.enabled = this.nativeLogger.isLoggable(LEVEL_MAP.get(this.level));
     }
 
     static JulLogger instance() {
@@ -145,15 +147,12 @@ class JulLogger implements Logger {
 
     @Override
     public boolean isEnabled() {
-        if (this.level == OFF) {
-            return false;
-        }
-        return !isLevelDisabled();
+        return this.enabled;
     }
 
     @Override
     public void log(Object message) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         nativeLogger.log(new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(message)));
@@ -161,7 +160,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(Supplier<?> message) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         nativeLogger.log(new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(message.get())));
@@ -169,7 +168,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(String message, Object... args) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
@@ -180,7 +179,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(String message, Supplier<?>... args) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
@@ -191,7 +190,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(Throwable t) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         ExtendedLogRecord extendedLogRecord = new ExtendedLogRecord(LEVEL_MAP.get(this.level), EMPTY_MESSAGE);
@@ -201,7 +200,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(Throwable t, Object message) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
@@ -212,7 +211,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(Throwable t, Supplier<?> message) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
@@ -223,7 +222,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(Throwable t, String message, Object... args) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
@@ -235,7 +234,7 @@ class JulLogger implements Logger {
 
     @Override
     public void log(Throwable t, String message, Supplier<?>... args) {
-        if (isLevelDisabled()) {
+        if (!this.isEnabled()) {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
@@ -250,10 +249,6 @@ class JulLogger implements Logger {
             return this;
         }
         return level == OFF ? NoopLogger.INSTANCE : getLogger(this.name, level);
-    }
-
-    private boolean isLevelDisabled() {
-        return !nativeLogger.isLoggable(LEVEL_MAP.get(this.level));
     }
 
     private static class CallStack {
