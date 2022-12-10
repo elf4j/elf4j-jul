@@ -43,7 +43,6 @@ import static elf4j.Level.*;
 class JulLogger implements Logger {
     private static final char CLOSE_BRACE = '}';
     private static final Level DEFAULT_LEVEL = INFO;
-    private static final String EMPTY_MESSAGE = "";
     private static final EnumMap<Level, java.util.logging.Level> LEVEL_MAP = setLevelMap();
     private static final EnumMap<Level, Map<String, JulLogger>> LOGGER_CACHE = initLoggerCache();
     private static final char OPEN_BRACE = '{';
@@ -110,6 +109,29 @@ class JulLogger implements Logger {
         return levelMap;
     }
 
+    private static Object supply(Object o) {
+        return o instanceof Supplier<?> ? ((Supplier<?>) o).get() : o;
+    }
+
+    private static Object @NonNull [] supply(Object[] objects) {
+        return Arrays.stream(objects).map(JulLogger::supply).toArray();
+    }
+
+    @Override
+    public @NonNull String getName() {
+        return this.name;
+    }
+
+    @Override
+    public @NonNull Level getLevel() {
+        return this.level;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
     @Override
     public Logger atTrace() {
         return atLevel(TRACE);
@@ -136,34 +158,11 @@ class JulLogger implements Logger {
     }
 
     @Override
-    public @NonNull String getName() {
-        return this.name;
-    }
-
-    @Override
-    public @NonNull Level getLevel() {
-        return this.level;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return this.enabled;
-    }
-
-    @Override
     public void log(Object message) {
         if (!this.isEnabled()) {
             return;
         }
-        nativeLogger.log(new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(message)));
-    }
-
-    @Override
-    public void log(Supplier<?> message) {
-        if (!this.isEnabled()) {
-            return;
-        }
-        nativeLogger.log(new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(message.get())));
+        nativeLogger.log(new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(supply(message))));
     }
 
     @Override
@@ -173,18 +172,7 @@ class JulLogger implements Logger {
         }
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(args);
-        nativeLogger.log(extendedLogRecord);
-    }
-
-    @Override
-    public void log(String message, Supplier<?>... args) {
-        if (!this.isEnabled()) {
-            return;
-        }
-        ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(Arrays.stream(args).map(Supplier::get).toArray(Object[]::new));
+        extendedLogRecord.setParameters(supply(args));
         nativeLogger.log(extendedLogRecord);
     }
 
@@ -193,7 +181,7 @@ class JulLogger implements Logger {
         if (!this.isEnabled()) {
             return;
         }
-        ExtendedLogRecord extendedLogRecord = new ExtendedLogRecord(LEVEL_MAP.get(this.level), EMPTY_MESSAGE);
+        ExtendedLogRecord extendedLogRecord = new ExtendedLogRecord(LEVEL_MAP.get(this.level), t.getMessage());
         extendedLogRecord.setThrown(t);
         nativeLogger.log(extendedLogRecord);
     }
@@ -204,18 +192,7 @@ class JulLogger implements Logger {
             return;
         }
         ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(message));
-        extendedLogRecord.setThrown(t);
-        nativeLogger.log(extendedLogRecord);
-    }
-
-    @Override
-    public void log(Throwable t, Supplier<?> message) {
-        if (!this.isEnabled()) {
-            return;
-        }
-        ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(message.get()));
+                new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(supply(message)));
         extendedLogRecord.setThrown(t);
         nativeLogger.log(extendedLogRecord);
     }
@@ -227,19 +204,7 @@ class JulLogger implements Logger {
         }
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(args);
-        extendedLogRecord.setThrown(t);
-        nativeLogger.log(extendedLogRecord);
-    }
-
-    @Override
-    public void log(Throwable t, String message, Supplier<?>... args) {
-        if (!this.isEnabled()) {
-            return;
-        }
-        ExtendedLogRecord extendedLogRecord =
-                new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
-        extendedLogRecord.setParameters(Arrays.stream(args).map(Supplier::get).toArray(Object[]::new));
+        extendedLogRecord.setParameters(supply(args));
         extendedLogRecord.setThrown(t);
         nativeLogger.log(extendedLogRecord);
     }
