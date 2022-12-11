@@ -33,14 +33,19 @@ The
 usual [java.util.logging configuration](https://docs.oracle.com/javase/8/docs/technotes/guides/logging/overview.html#a1.8)
 applies.
 
-With Maven, an end-user application would use this provider as a dependency of the `runtime` scope:
+With Maven, in addition to the ELF4J API compile-scope dependency, an end-user application would use this provider as a runtime-scope dependency:
 
-```
-        <dependency>
-            <groupId>io.github.elf4j</groupId>
-            <artifactId>elf4j-jul</artifactId>
-            <scope>runtime</scope>
-        </dependency>
+```xml
+<dependency>
+  <groupId>io.github.elf4j</groupId>
+  <artifactId>elf4j-api</artifactId>
+</dependency>
+
+<dependency>
+  <groupId>io.github.elf4j</groupId>
+  <artifactId>elf4j-jul</artifactId>
+  <scope>runtime</scope>
+</dependency>
 ```
 
 Note: A library, API, or server/container codebase would use the `test` or `provided` scope; or just use the ELF4J API -
