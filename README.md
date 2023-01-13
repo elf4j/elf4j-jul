@@ -50,7 +50,6 @@ runtime-scope dependency:
 </dependency>
 ```
 
-Note: A library, API, or server/container codebase would use the `test` or `provided` scope; or just use the ELF4J API -
-without any SPI provider, at all. Only one logging provider should be loaded and working at run-time; the
-facilitating codebase should leave the provider choice to the end-user application.
-
+Note: Only one logging provider such as this should be in effect at run-time. If different providers end up in the final 
+build of an application, somehow, then the elf4j.logger.factory.fqcn system property will have to be used to select the 
+desired provider.
