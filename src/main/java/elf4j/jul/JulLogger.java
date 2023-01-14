@@ -46,9 +46,9 @@ class JulLogger implements Logger {
     private static final EnumMap<Level, java.util.logging.Level> LEVEL_MAP = setLevelMap();
     private static final EnumMap<Level, Map<String, JulLogger>> LOGGER_CACHE = initLoggerCache();
     private static final char OPEN_BRACE = '{';
-    @NonNull private final String name;
-    @NonNull private final Level level;
     private final boolean enabled;
+    @NonNull private final Level level;
+    @NonNull private final String name;
     @NonNull private final java.util.logging.Logger nativeLogger;
 
     private JulLogger(@NonNull String name, @NonNull Level level) {
@@ -118,28 +118,13 @@ class JulLogger implements Logger {
     }
 
     @Override
-    public @NonNull String getName() {
-        return this.name;
-    }
-
-    @Override
-    public @NonNull Level getLevel() {
-        return this.level;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return this.enabled;
-    }
-
-    @Override
-    public Logger atTrace() {
-        return atLevel(TRACE);
-    }
-
-    @Override
     public Logger atDebug() {
         return atLevel(DEBUG);
+    }
+
+    @Override
+    public Logger atError() {
+        return atLevel(ERROR);
     }
 
     @Override
@@ -148,13 +133,28 @@ class JulLogger implements Logger {
     }
 
     @Override
+    public Logger atTrace() {
+        return atLevel(TRACE);
+    }
+
+    @Override
     public Logger atWarn() {
         return atLevel(WARN);
     }
 
     @Override
-    public Logger atError() {
-        return atLevel(ERROR);
+    public @NonNull Level getLevel() {
+        return this.level;
+    }
+
+    @Override
+    public @NonNull String getName() {
+        return this.name;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.enabled;
     }
 
     @Override
@@ -237,9 +237,9 @@ class JulLogger implements Logger {
     }
 
     private static class ExtendedLogRecord extends LogRecord {
-        private boolean needToInferCaller;
         private String callerClassName;
         private String callerMethodName;
+        private boolean needToInferCaller;
 
         public ExtendedLogRecord(java.util.logging.Level level, String msg) {
             super(level, msg);
