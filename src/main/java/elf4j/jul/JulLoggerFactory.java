@@ -27,21 +27,12 @@ package elf4j.jul;
 import elf4j.Logger;
 import elf4j.spi.LoggerFactory;
 
-import javax.annotation.Nullable;
-
+/**
+ *
+ */
 public class JulLoggerFactory implements LoggerFactory {
     @Override
     public Logger logger() {
         return JulLogger.instance();
-    }
-
-    @Override
-    public Logger logger(@Nullable String name) {
-        return JulLogger.instance(name);
-    }
-
-    @Override
-    public Logger logger(@Nullable Class<?> clazz) {
-        return JulLogger.instance(clazz);
     }
 }
