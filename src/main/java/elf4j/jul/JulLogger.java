@@ -49,25 +49,17 @@ class JulLogger implements Logger {
     private final boolean enabled;
     @NonNull private final Level level;
     @NonNull private final String name;
-    @NonNull private final java.util.logging.Logger nativeLogger;
+    @NonNull private final java.util.logging.Logger delegate;
 
     private JulLogger(@NonNull String name, @NonNull Level level) {
         this.name = name;
         this.level = level;
-        this.nativeLogger = java.util.logging.Logger.getLogger(name);
-        this.enabled = this.nativeLogger.isLoggable(LEVEL_MAP.get(this.level));
+        this.delegate = java.util.logging.Logger.getLogger(name);
+        this.enabled = this.delegate.isLoggable(LEVEL_MAP.get(this.level));
     }
 
     static JulLogger instance() {
         return getLogger(CallStack.mostRecentCallerOf(Logger.class).getClassName());
-    }
-
-    static JulLogger instance(String name) {
-        return getLogger(name == null ? CallStack.mostRecentCallerOf(Logger.class).getClassName() : name);
-    }
-
-    static JulLogger instance(Class<?> clazz) {
-        return getLogger(clazz == null ? CallStack.mostRecentCallerOf(Logger.class).getClassName() : clazz.getName());
     }
 
     private static JulLogger getLogger(String name) {
@@ -118,38 +110,16 @@ class JulLogger implements Logger {
     }
 
     @Override
-    public Logger atDebug() {
-        return atLevel(DEBUG);
-    }
-
-    @Override
-    public Logger atError() {
-        return atLevel(ERROR);
-    }
-
-    @Override
-    public Logger atInfo() {
-        return atLevel(INFO);
-    }
-
-    @Override
-    public Logger atTrace() {
-        return atLevel(TRACE);
-    }
-
-    @Override
-    public Logger atWarn() {
-        return atLevel(WARN);
+    public Logger atLevel(Level level) {
+        if (this.level == level) {
+            return this;
+        }
+        return level == OFF ? NoopLogger.OFF : getLogger(this.name, level);
     }
 
     @Override
     public @NonNull Level getLevel() {
         return this.level;
-    }
-
-    @Override
-    public @NonNull String getName() {
-        return this.name;
     }
 
     @Override
@@ -162,7 +132,7 @@ class JulLogger implements Logger {
         if (!this.isEnabled()) {
             return;
         }
-        nativeLogger.log(new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(supply(message))));
+        delegate.log(new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(supply(message))));
     }
 
     @Override
@@ -173,7 +143,7 @@ class JulLogger implements Logger {
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
         extendedLogRecord.setParameters(supply(args));
-        nativeLogger.log(extendedLogRecord);
+        delegate.log(extendedLogRecord);
     }
 
     @Override
@@ -183,7 +153,7 @@ class JulLogger implements Logger {
         }
         ExtendedLogRecord extendedLogRecord = new ExtendedLogRecord(LEVEL_MAP.get(this.level), t.getMessage());
         extendedLogRecord.setThrown(t);
-        nativeLogger.log(extendedLogRecord);
+        delegate.log(extendedLogRecord);
     }
 
     @Override
@@ -194,7 +164,7 @@ class JulLogger implements Logger {
         ExtendedLogRecord extendedLogRecord =
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), Objects.toString(supply(message)));
         extendedLogRecord.setThrown(t);
-        nativeLogger.log(extendedLogRecord);
+        delegate.log(extendedLogRecord);
     }
 
     @Override
@@ -206,14 +176,11 @@ class JulLogger implements Logger {
                 new ExtendedLogRecord(LEVEL_MAP.get(this.level), replaceWithJulPlaceholders(message));
         extendedLogRecord.setParameters(supply(args));
         extendedLogRecord.setThrown(t);
-        nativeLogger.log(extendedLogRecord);
+        delegate.log(extendedLogRecord);
     }
 
-    private Logger atLevel(Level level) {
-        if (this.level == level) {
-            return this;
-        }
-        return level == OFF ? NoopLogger.INSTANCE : getLogger(this.name, level);
+    String getName() {
+        return name;
     }
 
     private static class CallStack {

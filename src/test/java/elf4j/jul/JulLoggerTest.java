@@ -53,23 +53,13 @@ class JulLoggerTest {
         @Test
         void loggerNameForNullOrNoargInstanceCaller() {
             String thisClassName = this.getClass().getName();
-            assertEquals(thisClassName, Logger.instance().getName());
-            assertEquals(thisClassName, Logger.instance((Class<?>) null).getName());
-            assertEquals(thisClassName, Logger.instance((String) null).getName());
-        }
-
-        @Test
-        void blankOrEmptyNamesStayAsIs() {
-            String blank = "   ";
-            assertEquals(blank, Logger.instance(blank).getName());
-            String empty = "";
-            assertEquals("", Logger.instance(empty).getName());
+            assertEquals(thisClassName, ((JulLogger) Logger.instance()).getName());
         }
     }
 
     @Nested
     class readmeSamples {
-        private final Logger logger = Logger.instance(readmeSamples.class);
+        private final Logger logger = Logger.instance();
 
         @Test
         void messagesArgsAndGuards() {
@@ -77,7 +67,7 @@ class JulLoggerTest {
             logger.atInfo().log("info message");
             Logger debug = logger.atDebug();
             assertNotSame(logger, debug);
-            assertEquals(logger.getName(), debug.getName());
+            assertEquals(((JulLogger) logger).getName(), ((JulLogger) debug).getName());
             assertEquals(Level.DEBUG, debug.getLevel());
             if (debug.isEnabled()) {
                 debug.log("a {} guarded by a {}, so {} is created {} DEBUG level is {}",
