@@ -1,7 +1,7 @@
 # elf4j-jul
 
 An adapter to use [java.util.logging](https://docs.oracle.com/javase/8/docs/technotes/guides/logging/overview.html) as
-service provider and logging engine for the [ELF4J](https://github.com/elf4j/elf4j) (Easy Logging Facade for Java) API
+service provider and runtime logging engine for the [ELF4J](https://github.com/elf4j/elf4j) (Easy Logging Facade for Java) API
 
 ## User Story
 
