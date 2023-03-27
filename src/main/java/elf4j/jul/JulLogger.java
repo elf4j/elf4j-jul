@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2022 Easy Logging Facade for Java (ELF4J)
+ * Copyright (c) 2022 Qingtian Wang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ *
  */
 
 package elf4j.jul;
@@ -29,8 +30,8 @@ import elf4j.Logger;
 import elf4j.util.NoopLogger;
 import lombok.NonNull;
 import lombok.ToString;
-import net.jcip.annotations.Immutable;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -41,12 +42,11 @@ import static elf4j.Level.*;
 @Immutable
 @ToString
 class JulLogger implements Logger {
-    private static final char CLOSE_BRACE = '}';
     private static final Level DEFAULT_LEVEL = INFO;
+    private static final Class<JulLogger> SERVICE_INTERFACE_CLASS = JulLogger.class;
+    private static final Class<Logger> SERVICE_ACCESS_CLASS = Logger.class;
     private static final EnumMap<Level, java.util.logging.Level> LEVEL_MAP = setLevelMap();
     private static final EnumMap<Level, Map<String, JulLogger>> LOGGER_CACHE = initLoggerCache();
-    private static final char OPEN_BRACE = '{';
-    private final boolean enabled;
     @NonNull private final Level level;
     @NonNull private final String name;
     @NonNull private final java.util.logging.Logger delegate;
@@ -55,19 +55,18 @@ class JulLogger implements Logger {
         this.name = name;
         this.level = level;
         this.delegate = java.util.logging.Logger.getLogger(name);
-        this.enabled = this.delegate.isLoggable(LEVEL_MAP.get(this.level));
     }
 
     static JulLogger instance() {
-        return getLogger(CallStack.mostRecentCallerOf(Logger.class).getClassName());
-    }
-
-    private static JulLogger getLogger(String name) {
-        return getLogger(name, DEFAULT_LEVEL);
+        return getLogger(CallStack.directCallerOf(SERVICE_ACCESS_CLASS).getClassName());
     }
 
     private static JulLogger getLogger(@NonNull String name, @NonNull Level level) {
         return LOGGER_CACHE.get(level).computeIfAbsent(name, k -> new JulLogger(k, level));
+    }
+
+    private static JulLogger getLogger(String name) {
+        return getLogger(name, DEFAULT_LEVEL);
     }
 
     private static EnumMap<Level, Map<String, JulLogger>> initLoggerCache() {
@@ -84,7 +83,7 @@ class JulLogger implements Logger {
             char current = chars[i];
             stringBuilder.append(current);
             char next = i + 1 == chars.length ? Character.MIN_VALUE : chars[i + 1];
-            if (current == OPEN_BRACE && next == CLOSE_BRACE) {
+            if (current == '{' && next == '}') {
                 stringBuilder.append(placeholderIndex++);
             }
         }
@@ -101,12 +100,12 @@ class JulLogger implements Logger {
         return levelMap;
     }
 
-    private static Object supply(Object o) {
-        return o instanceof Supplier<?> ? ((Supplier<?>) o).get() : o;
-    }
-
     private static Object @NonNull [] supply(Object[] objects) {
         return Arrays.stream(objects).map(JulLogger::supply).toArray();
+    }
+
+    private static Object supply(Object o) {
+        return o instanceof Supplier<?> ? ((Supplier<?>) o).get() : o;
     }
 
     @Override
@@ -124,7 +123,7 @@ class JulLogger implements Logger {
 
     @Override
     public boolean isEnabled() {
-        return this.enabled;
+        return this.delegate.isLoggable(LEVEL_MAP.get(this.level));
     }
 
     @Override
@@ -179,13 +178,12 @@ class JulLogger implements Logger {
         delegate.log(extendedLogRecord);
     }
 
-    String getName() {
+    @NonNull String getName() {
         return name;
     }
 
     private static class CallStack {
-
-        static StackTraceElement mostRecentCallerOf(@NonNull Class<?> calleeClass) {
+        private static StackTraceElement directCallerOf(@NonNull Class<?> calleeClass) {
             StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
             String calleeClassName = calleeClass.getName();
             for (int i = 0; i < stackTrace.length; i++) {
@@ -206,17 +204,17 @@ class JulLogger implements Logger {
     private static class ExtendedLogRecord extends LogRecord {
         private String callerClassName;
         private String callerMethodName;
-        private boolean needToInferCaller;
+        private boolean retrieveCaller;
 
         public ExtendedLogRecord(java.util.logging.Level level, String msg) {
             super(level, msg);
-            needToInferCaller = true;
+            retrieveCaller = true;
         }
 
         @Override
         public String getSourceClassName() {
-            if (needToInferCaller) {
-                interCaller();
+            if (retrieveCaller) {
+                retrieveCaller();
             }
             return callerClassName;
         }
@@ -224,13 +222,13 @@ class JulLogger implements Logger {
         @Override
         public void setSourceClassName(String sourceClassName) {
             callerClassName = sourceClassName;
-            needToInferCaller = false;
+            retrieveCaller = false;
         }
 
         @Override
         public String getSourceMethodName() {
-            if (needToInferCaller) {
-                interCaller();
+            if (retrieveCaller) {
+                retrieveCaller();
             }
             return callerMethodName;
         }
@@ -238,12 +236,11 @@ class JulLogger implements Logger {
         @Override
         public void setSourceMethodName(String sourceMethodName) {
             callerMethodName = sourceMethodName;
-            needToInferCaller = false;
+            retrieveCaller = false;
         }
 
-        private void interCaller() {
-            needToInferCaller = false;
-            StackTraceElement caller = CallStack.mostRecentCallerOf(JulLogger.class);
+        private void retrieveCaller() {
+            StackTraceElement caller = CallStack.directCallerOf(SERVICE_INTERFACE_CLASS);
             setSourceClassName(caller.getClassName());
             setSourceMethodName(caller.getMethodName());
         }
