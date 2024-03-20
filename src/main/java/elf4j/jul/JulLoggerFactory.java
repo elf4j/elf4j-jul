@@ -26,12 +26,10 @@
 package elf4j.jul;
 
 import elf4j.Logger;
-import elf4j.spi.LoggerFactory;
+import elf4j.spi.LogServiceProvider;
 
-/**
- *
- */
-public class JulLoggerFactory implements LoggerFactory {
+/** */
+public class JulLoggerFactory implements LogServiceProvider {
     @Override
     public Logger logger() {
         return JulLogger.instance();

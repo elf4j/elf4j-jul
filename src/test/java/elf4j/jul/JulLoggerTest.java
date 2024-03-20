@@ -25,16 +25,18 @@
 
 package elf4j.jul;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import elf4j.Level;
 import elf4j.Logger;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class JulLoggerTest {
 
@@ -71,14 +73,18 @@ class JulLoggerTest {
             assertEquals(((JulLogger) logger).getName(), ((JulLogger) debug).getName());
             assertEquals(Level.DEBUG, debug.getLevel());
             if (debug.isEnabled()) {
-                debug.log("a {} guarded by a {}, so {} is created {} DEBUG level is {}",
+                debug.log(
+                        "a {} guarded by a {}, so {} is created {} DEBUG level is {}",
                         "long message",
                         "level check",
                         "no message object",
                         "unless",
                         "enabled by the configuration of the logging provider");
             }
-            debug.log((Supplier) () -> "alternative to the level guard, using a supplier function should achieve the same goal, pending quality of the logging provider");
+            debug.log(
+                    (Supplier)
+                            () ->
+                                    "alternative to the level guard, using a supplier function should achieve the same goal, pending quality of the logging provider");
         }
 
         @Test
@@ -89,25 +95,28 @@ class JulLoggerTest {
             Throwable ex = new Exception("ex message");
             error.log(ex, "level set omitted but we know the level is Level.ERROR");
             error.atWarn()
-                    .log(ex,
+                    .log(
+                            ex,
                             "the log level switched to WARN on the fly. that is, {} returns a {} and {} Logger {}",
                             "atWarn()",
                             "different",
                             "immutable",
                             "instance");
             error.atError()
-                    .log(ex,
+                    .log(
+                            ex,
                             "here the {} call is {} because the {} instance is {}, and the instance's log level has and will always be Level.ERROR",
                             "atError()",
                             "unnecessary",
                             "error logger",
                             "immutable");
-            error.log(ex,
+            error.log(
+                    ex,
                     "now at Level.ERROR, together with the exception stack trace, logging some items expensive to compute: item1 {}, item2 {}, item3 {}, item4 {}, ...",
                     "i11111",
                     (Supplier) () -> "i22222",
                     "i33333",
-                    (Supplier) () -> Arrays.stream(new Object[] { "i44444" }).collect(Collectors.toList()));
+                    (Supplier) () -> Arrays.stream(new Object[] {"i44444"}).collect(Collectors.toList()));
         }
     }
 }

@@ -25,19 +25,18 @@
 
 package elf4j.jul;
 
+import static elf4j.Level.*;
+
 import elf4j.Level;
 import elf4j.Logger;
 import elf4j.util.NoopLogger;
-import lombok.NonNull;
-import lombok.ToString;
-
-import javax.annotation.concurrent.Immutable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.logging.LogRecord;
-
-import static elf4j.Level.*;
+import javax.annotation.concurrent.Immutable;
+import lombok.NonNull;
+import lombok.ToString;
 
 @Immutable
 @ToString
@@ -47,8 +46,11 @@ class JulLogger implements Logger {
     private static final Class<Logger> SERVICE_ACCESS_CLASS = Logger.class;
     private static final EnumMap<Level, java.util.logging.Level> LEVEL_MAP = setLevelMap();
     private static final EnumMap<Level, Map<String, JulLogger>> LOGGER_CACHE = initLoggerCache();
+
     @NonNull private final Level level;
+
     @NonNull private final String name;
+
     @NonNull private final java.util.logging.Logger delegate;
 
     private JulLogger(@NonNull String name, @NonNull Level level) {
